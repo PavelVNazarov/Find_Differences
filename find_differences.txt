@@ -116,3 +116,94 @@ python src/main.py
 Визуализация: Отображаем оригинальные изображения и найденные отличия.
 Заключение
 Этот проект предоставляет базовую реализацию задачи "Найди все отличия". 
+
+
+добавить несколько улучшений и комментариев для лучшего понимания. Вот обновленный код с комментариями и небольшими изменениями:
+
+Обновленный код
+src/image_processing.py - обработка изображений
+
+import cv2
+import numpy as np
+
+def load_images(image_path1, image_path2):
+    img1 = cv2.imread(image_path1)
+    img2 = cv2.imread(image_path2)
+    return img1, img2
+
+def find_differences(img1, img2):
+    # Преобразуем изображения в оттенки серого
+    gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+    gray2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+
+    # Вычисляем абсолютную разницу между изображениями
+    diff = cv2.absdiff(gray1, gray2)
+
+    # Применяем порог для выделения отличий
+    _, thresh = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
+
+    # Находим контуры отличий
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Рисуем контуры на оригинальном изображении
+    for contour in contours:
+        cv2.drawContours(img1, [contour], -1, (0, 255, 0), 2)  # Зеленый цвет для контуров
+
+    return thresh, img1  # Возвращаем также изображение с контурами
+
+
+src/difference_visualization.py - визуализация отличий
+
+import cv2
+import matplotlib.pyplot as plt
+
+def visualize_differences(img1, img2, differences, img_with_contours):
+    plt.figure(figsize=(10, 5))
+
+    plt.subplot(1, 4, 1)
+    plt.title('Image 1')
+    plt.imshow(cv2.cvtColor(img1, cv2.COLOR_BGR2RGB))
+    plt.axis('off')
+
+    plt.subplot(1, 4, 2)
+    plt.title('Image 2')
+    plt.imshow(cv2.cvtColor(img2, cv2.COLOR_BGR2RGB))
+    plt.axis('off')
+
+    plt.subplot(1, 4, 3)
+    plt.title('Differences')
+    plt.imshow(differences, cmap='gray')
+    plt.axis('off')
+
+    plt.subplot(1, 4, 4)
+    plt.title('Image with Contours')
+    plt.imshow(cv2.cvtColor(img_with_contours, cv2.COLOR_BGR2RGB))
+    plt.axis('off')
+
+    plt.show()
+
+
+src/main.py - основной файл
+
+from image_processing import load_images, find_differences
+from difference_visualization import visualize_differences
+
+def main():
+    # Загрузка изображений
+    img1, img2 = load_images('data/image1.jpg', 'data/image2.jpg')
+
+    # Поиск отличий
+    differences, img_with_contours = find_differences(img1, img2)
+
+    # Визуализация результатов
+    visualize_differences(img1, img2, differences, img_with_contours)
+
+if __name__ == "__main__":
+    main()
+
+Объяснение изменений
+Контуры отличий: В функции find_differences добавлено нахождение контуров отличий и их отображение на первом изображении.
+Визуализация: В функции visualize_differences добавлено отображение изображения с контурами отличий.
+Обновление возвращаемых значений: Функция find_differences теперь возвращает как маску отличий, так и изображение с нарисованными контурами.
+Эти изменения помогут лучше визуализировать отличия между изображениями и улучшат общее восприятие результатов.
+
