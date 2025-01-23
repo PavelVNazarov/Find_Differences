@@ -1,6 +1,5 @@
 # src/difference_visualization.py - визуализация отличий
 
-
 import cv2
 import matplotlib.pyplot as plt
 
@@ -28,4 +27,3 @@ def visualize_differences(img1, img2, differences, img_with_contours):
     plt.axis('off')
 
     plt.show()
-
