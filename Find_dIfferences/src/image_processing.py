@@ -3,7 +3,6 @@
 import cv2
 import numpy as np
 
-
 def load_images(image_path1, image_path2):
     img1 = cv2.imread(image_path1)
     img2 = cv2.imread(image_path2)
@@ -46,4 +45,8 @@ def find_differences(img1, img2):
     for contour in contours:
         cv2.drawContours(img_with_contours, [contour], -1, (0, 255, 0), 2)  # Зеленый цвет для контуров
 
-    return thresh, img_with_contours  # Возвращаем изображение с контурами
+    # Проверяем, есть ли отличия
+    has_differences = len(contours) > 0
+
+    return thresh, img_with_contours, has_differences  # Возвращаем изображение с контурами и флаг отличий
+

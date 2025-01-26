@@ -1,3 +1,5 @@
+# src/main.py - основное приложение
+
 import cv2
 from tkinter import Tk, Frame, Button, Label, filedialog, messagebox
 from image_processing import load_images, find_differences
@@ -29,6 +31,7 @@ class App:
         if self.img1 is None:
             messagebox.showerror("Ошибка", "Не удалось загрузить первое изображение.")
             return
+        messagebox.showinfo("Успех", "Первое изображение успешно загружено.")
 
     def load_image2(self):
         self.img2_path = filedialog.askopenfilename(title="Выберите второе изображение", filetypes=[("Image files", "*.jpg;*.jpeg;*.png")])
@@ -39,6 +42,7 @@ class App:
         if self.img2 is None:
             messagebox.showerror("Ошибка", "Не удалось загрузить второе изображение.")
             return
+        messagebox.showinfo("Успех", "Второе изображение успешно загружено.")
 
     def find_differences(self):
         if self.img1 is None or self.img2 is None:
@@ -48,67 +52,12 @@ class App:
         if self.img1.shape != self.img2.shape:
             self.img2 = cv2.resize(self.img2, (self.img1.shape[1], self.img1.shape[0]))
         # Поиск отличий
-        differences, img_with_contours = find_differences(self.img1, self.img2)
+        differences, img_with_contours, has_differences = find_differences(self.img1, self.img2)
         # Визуализация результатов
-        visualize_differences(self.img1, self.img2, differences, img_with_contours)
+        visualize_differences(self.img1, self.img2, differences, img_with_contours, has_differences)
 
 if __name__ == "__main__":
     root = Tk()
     app = App(root)
     root.mainloop()
-
-
-# import cv2
-# from tkinter import Tk, Frame, Button, Label, filedialog, Toplevel
-# from image_processing import load_images, find_differences
-# from difference_visualization import visualize_differences
-#
-# def load_image1():
-#     global img1_path
-#     img1_path = filedialog.askopenfilename(title="Выберите первое изображение", filetypes=[("Image files", "*.jpg;*.jpeg;*.png")])
-#     if img1_path:
-#         img1_label.config(text="Первое изображение загружено.")
-#
-# def load_image2():
-#     global img2_path
-#     img2_path = filedialog.askopenfilename(title="Выберите второе изображение", filetypes=[("Image files", "*.jpg;*.jpeg;*.png")])
-#     if img2_path:
-#         img2_label.config(text="Второе изображение загружено.")
-#
-# def find_and_visualize():
-#     if img1_path and img2_path:
-#         img1, img2 = load_images(img1_path, img2_path)
-#         if img1.shape != img2.shape:
-#             img2 = cv2.resize(img2, (img1.shape[1], img1.shape[0]))
-#         differences, img_with_contours = find_differences(img1, img2)
-#         visualize_differences(img1, img2, differences, img_with_contours)
-#     else:
-#         print("Пожалуйста, загрузите оба изображения.")
-#
-# def open_main_window():
-#     main_window = Toplevel(root)
-#     main_window.title("Главное окно")
-#     Label(main_window, text="Добро пожаловать в программу сравнения изображений!", padx=20, pady=20).pack()
-#     Label(main_window, text="Выберите два изображения для сравнения.").pack()
-#
-#     Button(main_window, text="Загрузить первое изображение", command=load_image1).pack(pady=5)
-#     global img1_label
-#     img1_label = Label(main_window, text="Первое изображение не загружено.")
-#     img1_label.pack()
-#
-#     Button(main_window, text="Загрузить второе изображение", command=load_image2).pack(pady=5)
-#     global img2_label
-#     img2_label = Label(main_window, text="Второе изображение не загружено.")
-#     img2_label.pack()
-#
-#     Button(main_window, text="Найти отличия", command=find_and_visualize).pack(pady=20)
-#
-# # Инициализация tkinter
-# root = Tk()
-# # root.title("Сравнение изображений")
-# root.geometry("400x300")
-#
-# open_main_window()
-#
-# root.mainloop()
 
