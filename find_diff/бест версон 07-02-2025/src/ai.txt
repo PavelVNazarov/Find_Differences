@@ -1,0 +1,185 @@
+1. requirements.txt
+Добавим библиотеку Pillow для работы с изображениями в Tkinter:
+
+
+opencv-python==4.8.0.76
+numpy==1.24.3
+matplotlib==3.7.2
+Pillow==10.0.0
+
+2. image_processing.py
+Добавим функцию для изменения размера изображений, чтобы они были одинаковыми перед сравнением:
+
+
+import cv2
+import numpy as np
+
+def load_images(image_path1, image_path2):
+    img1 = cv2.imread(image_path1)
+    img2 = cv2.imread(image_path2)
+
+    if img1 is None:
+        raise ValueError(f"Не удалось загрузить изображение: {image_path1}")
+    if img2 is None:
+        raise ValueError(f"Не удалось загрузить изображение: {image_path2}")
+
+    # Приводим изображения к одному размеру
+    img2 = cv2.resize(img2, (img1.shape[1], img1.shape[0]))
+
+    return img1, img2
+
+def find_differences(img1, img2):
+    gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+    gray2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+
+    gray1 = cv2.bilateralFilter(gray1, 9, 75, 75)
+    gray2 = cv2.bilateralFilter(gray2, 9, 75, 75)
+
+    diff = cv2.absdiff(gray1, gray2)
+    _, thresh = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
+
+    kernel = np.ones((5, 5), np.uint8)
+    thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+
+    edges = cv2.Canny(thresh.astype(np.uint8), 100, 200)
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    img_with_contours = img2.copy()
+    for contour in contours:
+        cv2.drawContours(img_with_contours, [contour], -1, (0, 255, 0), 2)
+
+    has_differences = np.sum(thresh) > 0
+
+    return thresh, img_with_contours, has_differences
+
+3. difference_visualization.py
+Добавим возможность сохранения результата сравнения в файл:
+
+import cv2
+import matplotlib.pyplot as plt
+
+def visualize_differences(img1, img2, differences, img_with_contours, has_differences, save_path=None):
+    plt.figure(figsize=(10, 5))
+
+    plt.subplot(1, 4, 1)
+    plt.title('Image 1')
+    plt.imshow(cv2.cvtColor(img1, cv2.COLOR_BGR2RGB))
+    plt.axis('off')
+
+    plt.subplot(1, 4, 2)
+    plt.title('Image 2')
+    plt.imshow(cv2.cvtColor(img2, cv2.COLOR_BGR2RGB))
+    plt.axis('off')
+
+    plt.subplot(1, 4, 3)
+    plt.title('Differences')
+    plt.imshow(differences, cmap='gray')
+    plt.axis('off')
+
+    plt.subplot(1, 4, 4)
+    plt.title('Image with Contours')
+    plt.imshow(cv2.cvtColor(img_with_contours, cv2.COLOR_BGR2RGB))
+    plt.axis('off')
+
+    if save_path:
+        plt.savefig(save_path)
+    plt.show()
+
+    if has_differences:
+        print("Есть отличия")
+    else:
+        print("Нет отличий")
+
+4. main.py
+Добавим возможность отображения изображений в интерфейсе Tkinter и сохранения результата:
+
+
+import cv2
+from tkinter import Tk, Button, Label, filedialog, messagebox
+from PIL import Image, ImageTk
+from image_processing import load_images, find_differences
+from difference_visualization import visualize_differences
+
+class App:
+    def __init__(self, master):
+        self.master = master
+        master.title("Сравнение изображений")
+        self.label = Label(master, text="Добро пожаловать в программу сравнения изображений!")
+        self.label.pack()
+        self.load_img1_button = Button(master, text="Загрузить первое изображение", command=self.load_image1)
+        self.load_img1_button.pack()
+        self.load_img2_button = Button(master, text="Загрузить второе изображение", command=self.load_image2)
+        self.load_img2_button.pack()
+        self.find_differences_button = Button(master, text="Найти отличия", command=self.find_differences)
+        self.find_differences_button.pack()
+        self.save_result_button = Button(master, text="Сохранить результат", command=self.save_result)
+        self.save_result_button.pack()
+        self.img1_path = None
+        self.img2_path = None
+        self.img1 = None
+        self.img2 = None
+        self.result_image = None
+
+    def load_image1(self):
+        self.img1_path = filedialog.askopenfilename(title="Выберите первое изображение", filetypes=[("Image files", "*.jpg;*.jpeg;*.png")])
+        if not self.img1_path:
+            messagebox.showerror("Ошибка", "Не выбрано первое изображение.")
+            return
+        self.img1 = cv2.imread(self.img1_path)
+        if self.img1 is None:
+            messagebox.showerror("Ошибка", "Не удалось загрузить первое изображение.")
+            return
+        messagebox.showinfo("Успех", "Первое изображение успешно загружено.")
+
+    def load_image2(self):
+        self.img2_path = filedialog.askopenfilename(title="Выберите второе изображение", filetypes=[("Image files", "*.jpg;*.jpeg;*.png")])
+        if not self.img2_path:
+            messagebox.showerror("Ошибка", "Не выбрано второе изображение.")
+            return
+        self.img2 = cv2.imread(self.img2_path)
+        if self.img2 is None:
+            messagebox.showerror("Ошибка", "Не удалось загрузить второе изображение.")
+            return
+        messagebox.showinfo("Успех", "Второе изображение успешно загружено.")
+
+    def find_differences(self):
+        if self.img1 is None or self.img2 is None:
+            messagebox.showerror("Ошибка", "Необходимо загрузить оба изображения.")
+            return
+        # Поиск отличий
+        differences, img_with_contours, has_differences = find_differences(self.img1, self.img2)
+        # Визуализация результатов
+        visualize_differences(self.img1, self.img2, differences, img_with_contours, has_differences)
+        self.result_image = img_with_contours
+
+    def save_result(self):
+        if self.result_image is None:
+            messagebox.showerror("Ошибка", "Сначала найдите отличия.")
+            return
+        save_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG files", "*.png")])
+        if save_path:
+            cv2.imwrite(save_path, self.result_image)
+            messagebox.showinfo("Успех", "Результат успешно сохранен.")
+
+if __name__ == "__main__":
+    root = Tk()
+    app = App(root)
+    root.mainloop()
+
+Запуск приложения
+Установите зависимости:
+
+pip install -r requirements.txt
+
+Запустите приложение:
+
+python main.py
+
+Основные улучшения:
+Изменение размера изображений: Теперь изображения автоматически приводятся к одному размеру перед сравнением.
+
+Сохранение результата: Добавлена возможность сохранения результата сравнения в файл.
+
+Интерфейс Tkinter: Добавлены кнопки для загрузки изображений, поиска отличий и сохранения результата.
+

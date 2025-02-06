@@ -1,0 +1,200 @@
+Проект: "Найди все отличия"
+ Цели проекта
+Разработать ИИ, который может сравнивать две картинки и находить отличия между ними.
+Визуализировать найденные отличия.
+
+3. Установка зависимостей
+
+Создайте файл requirements.txt с необходимыми библиотеками:
+
+opencv-python
+numpy
+matplotlib
+
+Установите зависимости:
+
+pip install -r requirements.txt
+
+
+Запуск проекта
+Поместите Ваши изображения в папку data/ и назовите их image1.jpg и image2.jpg.
+Запустите проект:
+
+python src/main.py
+
+
+# src/image_processing.py - обработка изображений
+
+import cv2
+import numpy as np
+
+def load_images(image_path1, image_path2):
+    img1 = cv2.imread(image_path1)
+    img2 = cv2.imread(image_path2)
+
+    if img1 is None:
+        raise ValueError(f"Не удалось загрузить изображение: {image_path1}")
+    if img2 is None:
+        raise ValueError(f"Не удалось загрузить изображение: {image_path2}")
+
+    return img1, img2
+
+def find_differences(img1, img2):
+    # Преобразуем изображения в оттенки серого
+    gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+    gray2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+
+    # Вычисляем абсолютную разницу между изображениями
+    diff = cv2.absdiff(gray1, gray2)
+
+    # Применяем порог для выделения отличий
+    _, thresh = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
+
+    # Находим контуры отличий
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Рисуем контуры на оригинальном изображении
+    for contour in contours:
+        cv2.drawContours(img1, [contour], -1, (0, 255, 0), 2)  # Зеленый цвет для контуров
+
+    return thresh, img1  # Возвращаем также изображение с контурами
+
+
+# src/difference_visualization.py - визуализация отличий
+
+import cv2
+import matplotlib.pyplot as plt
+
+def visualize_differences(img1, img2, differences, img_with_contours):
+    plt.figure(figsize=(10, 5))
+
+    plt.subplot(1, 4, 1)
+    plt.title('Image 1')
+    plt.imshow(cv2.cvtColor(img1, cv2.COLOR_BGR2RGB))
+    plt.axis('off')
+
+    plt.subplot(1, 4, 2)
+    plt.title('Image 2')
+    plt.imshow(cv2.cvtColor(img2, cv2.COLOR_BGR2RGB))
+    plt.axis('off')
+
+    plt.subplot(1, 4, 3)
+    plt.title('Differences')
+    plt.imshow(differences, cmap='gray')
+    plt.axis('off')
+
+    plt.subplot(1, 4, 4)
+    plt.title('Image with Contours')
+    plt.imshow(cv2.cvtColor(img_with_contours, cv2.COLOR_BGR2RGB))
+    plt.axis('off')
+
+    plt.show()
+
+
+
+# src/main.py - основной файл
+
+import cv2
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
+from image_processing import load_images, find_differences
+from difference_visualization import visualize_differences
+
+def main():
+    # Инициализация tkinter
+    Tk().withdraw()  # Скрываем основное окно
+
+    # Открываем диалог выбора файла для первого изображения
+    img1_path = askopenfilename(title="Выберите первое изображение", filetypes=[("Image files", "*.jpg;*.jpeg;*.png")])
+    if not img1_path:
+        print("Не выбрано первое изображение.")
+        return
+
+    # Открываем диалог выбора файла для второго изображения
+    img2_path = askopenfilename(title="Выберите второе изображение", filetypes=[("Image files", "*.jpg;*.jpeg;*.png")])
+    if not img2_path:
+        print("Не выбрано второе изображение.")
+        return
+
+    # Загрузка изображений
+    img1, img2 = load_images(img1_path, img2_path)
+
+    # Проверяем размеры и изменяем, если нужно
+    if img1.shape != img2.shape:
+        img2 = cv2.resize(img2, (img1.shape[1], img1.shape[0]))
+
+    # Поиск отличий
+    differences, img_with_contours = find_differences(img1, img2)
+
+    # Визуализация результатов
+    visualize_differences(img1, img2, differences, img_with_contours)
+
+if __name__ == "__main__":
+    main()
+
+
+# requirements.txt
+
+opencv-python
+numpy
+matplotlib
+
+
+README.md
+
+# Найди все отличия
+
+## Цели проекта
+Разработать ИИ, который может сравнивать две картинки и находить отличия между ними. Визуализировать найденные отличия.
+
+# Структура проекта
+find_differences/
+│
+├── data/
+│   ├── image1.jpg
+│   └── image2.jpg
+│
+├── src/
+│   ├── main.py
+│   ├── image_processing.py
+│   └── difference_visualization.py
+│
+├── requirements.txt
+└── README.md
+
+
+
+## Описание работы
+1. **Загрузка изображений**: Загружаем два изображения для сравнения.
+2. **Обработка изображений**: Преобразуем изображения в оттенки серого, вычисляем абсолютную разницу и применяем порог для выделения отличий.
+3. **Визуализация**: Отображаем оригинальные изображения и найденные отличия.
+
+Этот проект предоставляет базовую реализацию задачи "Найди все отличия".
+
+Объяснение изменений
+Контуры отличий: В функции find_differences добавлено нахождение контуров отличий и их отображение на первом изображении.
+Визуализация: В функции visualize_differences добавлено отображение изображения с контурами отличий.
+Обновление возвращаемых значений: Функция find_differences теперь возвращает как маску отличий, так и изображение с нарисованными контурами.
+Эти изменения помогут лучше визуализировать отличия между изображениями и улучшат общее восприятие результатов.
+
+Чтобы улучшить поиск различий между изображениями, можно рассмотреть следующие подходы:
+
+Улучшение предобработки изображений:
+
+Используйте адаптивное сглаживание (например, cv2.bilateralFilter) для уменьшения шума, сохраняя края.
+Примените методы нормализации яркости и контрастности, такие как CLAHE (Contrast Limited Adaptive Histogram Equalization).
+Использование методов выделения признаков:
+
+Примените алгоритмы, такие как SIFT (Scale-Invariant Feature Transform) или ORB (Oriented FAST and Rotated BRIEF), для нахождения ключевых точек и их описателей, что может помочь в более точном сравнении.
+Сравнение на основе гистограмм:
+
+Сравните гистограммы изображений для выявления различий в распределении цветов.
+Использование методов машинного обучения:
+
+Обучите модель для классификации различий, используя наборы данных с размеченными изображениями.
+Пороговая обработка:
+
+Экспериментируйте с различными значениями порога в cv2.threshold, чтобы лучше выделить отличия.
+
+
+
